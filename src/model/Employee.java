@@ -37,11 +37,14 @@ public class Employee extends Person implements Comparable<Employee> {
 
     @Override
     public String toString() {
-        return "Employee{" + super.toString() +
-                "department=" + department +
-                ", salary=" + salary +
-                ", hireDate=" + hireDate +
-                '}';
+        return "\n=== EMPLOYEE ===" +
+                "\nName: " + name +
+                "\nEmail: " + email +
+                "\nPhone: " + phoneNumber +
+                "\nDepartment: " + department.getName() +
+                "\nSalary: " + salary + " USD" +
+                "\nHire Date: " + hireDate +
+                "\n================";
     }
 
     @Override

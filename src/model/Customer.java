@@ -17,6 +17,11 @@ public class Customer extends Person {
     }
     @Override
     public String toString() {
-        return "Customer{" + super.toString() + ", credit score = " + creditScore + "}";
+        return "\n=== CUSTOMER ===" +
+                "\nName: " + name +
+                "\nEmail: " + email +
+                "\nPhone: " + phoneNumber +
+                "\nCredit Score: " + creditScore +
+                "\n================";
     }
 }

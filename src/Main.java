@@ -1,10 +1,7 @@
 import model.*;
-import service.CustomerService;
-import service.EmployerService;
-import service.VehicleService;
+import service.*;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -41,6 +38,14 @@ public class Main {
         VehicleService vehicleService = VehicleService.getInstance();
         CustomerService customerService = CustomerService.getInstance();
         EmployerService employerService = EmployerService.getInstance();
+
+        VehicleCsvService vehicleCsvService = VehicleCsvService.getInstance();
+        EmployeeCsvService employeeCsvService = EmployeeCsvService.getInstance();
+        CustomerCsvService customerCsvService = CustomerCsvService.getInstance();
+
+        vehicleCsvService.loadVehicles().forEach(vehicleService::addVehicle);
+        employeeCsvService.loadEmployees().forEach(employerService::addEmployee);
+        customerCsvService.loadCustomers().forEach(customerService::addCustomer);
 
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
@@ -170,6 +175,8 @@ public class Main {
             default -> System.out.println("Invalid Option!");
         }
         System.out.println("Vehicle added successfully!");
+        AuditService.getInstance().log("add_vehicle");
+        VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
     }
 
     private static void removeVehicleMenu(Scanner scanner, VehicleService vehicleService) {
@@ -178,6 +185,8 @@ public class Main {
         try {
             vehicleService.removeVehicle(id);
             System.out.println("Vehicle removed successfully!");
+            AuditService.getInstance().log("remove_vehicle");
+            VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -210,6 +219,7 @@ public class Main {
             }
             default -> System.out.println("Invalid Option!");
         }
+        AuditService.getInstance().log("filter_vehicle");
     }
 
     private static void searchVehicleMenu(Scanner scanner, VehicleService vehicleService) {
@@ -249,6 +259,7 @@ public class Main {
             }
             default -> System.out.println("Invalid Option!");
         }
+        AuditService.getInstance().log("search_vehicles");
     }
 
     private static void updateVehicleMenu(Scanner scanner, VehicleService vehicleService) {
@@ -271,6 +282,8 @@ public class Main {
         String body = readString(scanner);
         vehicleService.updateVehicle(v, mileage, price, body, brand, model);
         System.out.println("Vehicle updated successfully!");
+        AuditService.getInstance().log("update_vehicle");
+        VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
     }
 
     private static void computeFinancingMenu(Scanner scanner, VehicleService vehicleService) {
@@ -287,6 +300,7 @@ public class Main {
         double interestRate = readDouble(scanner);
         double monthlyPayment = vehicleService.computeFinancing(v, months, interestRate);
         System.out.println("The monthly payment for this vehicle is " + monthlyPayment + " USD");
+        AuditService.getInstance().log("compute_financing");
     }
 
     private static void sellVehicleMenu(Scanner scanner, VehicleService vehicleService, CustomerService customerService) {
@@ -301,6 +315,8 @@ public class Main {
         }
         try {
             vehicleService.sellVehicle(id, c);
+            AuditService.getInstance().log("sell_vehicle");
+            VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -353,6 +369,8 @@ public class Main {
         Employee employee = new Employee(name, email, phone, department, salary, LocalDate.parse(date));
         employerService.addEmployee(employee);
         System.out.println("Employee added successfully!");
+        AuditService.getInstance().log("add_employee");
+        EmployeeCsvService.getInstance().saveEmployees(employerService.getEmployees());
     }
 
     private static void removeEmployeeMenu(Scanner scanner, EmployerService employerService) {
@@ -361,6 +379,8 @@ public class Main {
         try {
             employerService.removeEmployee(email);
             System.out.println("Employee removed successfully!");
+            AuditService.getInstance().log("remove_employee");
+            EmployeeCsvService.getInstance().saveEmployees(employerService.getEmployees());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -397,6 +417,8 @@ public class Main {
         Department department = new Department(deptName, deptDesc);
         employerService.updateEmployee(e, name, newEmail, phone, department, salary, LocalDate.parse(date));
         System.out.println("Employee updated successfully!");
+        AuditService.getInstance().log("update_employee");
+        EmployeeCsvService.getInstance().saveEmployees(employerService.getEmployees());
     }
 
     private static void customerMenu(Scanner scanner, CustomerService customerService) {
@@ -434,6 +456,8 @@ public class Main {
         int creditScore = readInt(scanner);
         customerService.addCustomer(new Customer(name, email, phone, creditScore));
         System.out.println("Customer added successfully!");
+        AuditService.getInstance().log("add_customer");
+        CustomerCsvService.getInstance().saveCustomers(customerService.getCustomers());
     }
 
     private static void removeCustomerMenu(Scanner scanner, CustomerService customerService) {
@@ -442,6 +466,8 @@ public class Main {
         try {
             customerService.removeCustomer(email);
             System.out.println("Customer removed successfully!");
+            AuditService.getInstance().log("remove_customer");
+            CustomerCsvService.getInstance().saveCustomers(customerService.getCustomers());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -456,5 +482,6 @@ public class Main {
             return;
         }
         System.out.println(c);
+        AuditService.getInstance().log("customer_search");
     }
 }
