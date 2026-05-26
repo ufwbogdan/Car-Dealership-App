@@ -38,15 +38,17 @@ public class Main {
         VehicleService vehicleService = VehicleService.getInstance();
         CustomerService customerService = CustomerService.getInstance();
         EmployerService employerService = EmployerService.getInstance();
+        TransactionService transactionService = TransactionService.getInstance();
 
         VehicleCsvService vehicleCsvService = VehicleCsvService.getInstance();
         EmployeeCsvService employeeCsvService = EmployeeCsvService.getInstance();
         CustomerCsvService customerCsvService = CustomerCsvService.getInstance();
+        TransactionCsvService transactionCsvService = TransactionCsvService.getInstance();
 
         vehicleCsvService.loadVehicles().forEach(vehicleService::addVehicle);
         employeeCsvService.loadEmployees().forEach(employerService::addEmployee);
         customerCsvService.loadCustomers().forEach(customerService::addCustomer);
-
+        transactionCsvService.loadTransactions(customerService.getCustomers()).forEach(transactionService::addTransaction);
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
         while(running) {
@@ -85,6 +87,7 @@ public class Main {
             System.out.println("7. Update Vehicle");
             System.out.println("8. Compute financing");
             System.out.println("9. Sell Vehicle");
+            System.out.println("10. Get Transactions");
             System.out.println("0. Back to Main Menu");
 
             int choice = readInt(scanner);
@@ -99,6 +102,7 @@ public class Main {
                 case 7 -> updateVehicleMenu(scanner, vehicleService);
                 case 8 -> computeFinancingMenu(scanner, vehicleService);
                 case 9 -> sellVehicleMenu(scanner, vehicleService, customerService);
+                case 10 -> TransactionService.getInstance().getTransactionList().forEach(System.out::println);
                 case 0 -> running = false;
                 default -> System.out.println("Invalid Option!");
             }
@@ -317,6 +321,9 @@ public class Main {
             vehicleService.sellVehicle(id, c);
             AuditService.getInstance().log("sell_vehicle");
             VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
+            TransactionCsvService.getInstance().saveTransactions(
+                    TransactionService.getInstance().getTransactionList()
+            );
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }

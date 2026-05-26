@@ -1,8 +1,10 @@
 package service;
 import model.Customer;
+import model.Transaction;
 import model.Vehicle;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
 public class VehicleService {
     private static VehicleService instance;
     private final List<Vehicle> vehicles = new ArrayList<>();
+    private final List<Vehicle> soldVehicles = new ArrayList<>();
 
     private VehicleService() {}
 
@@ -38,6 +41,10 @@ public class VehicleService {
 
     public List<Vehicle> getVehicles() {
         return vehicles;
+    }
+
+    public List<Vehicle> getSoldVehicles() {
+        return soldVehicles;
     }
 
     public List<Vehicle> searchByYear(int year) {
@@ -116,6 +123,12 @@ public class VehicleService {
         if (v == null) {
             throw new IllegalArgumentException("Vehicle with id " + id + " not found!");
         }
+        TransactionService transactionService = TransactionService.getInstance();
+        int transactionId = transactionService.getTransactionList().size() + 1;
+        Transaction transaction = new Transaction(transactionId, v, c, LocalDateTime.now());
+        transactionService.addTransaction(transaction);
+
+        soldVehicles.add(v);
         vehicles.removeIf(vehicle -> vehicle.getId() == id);
         System.out.println("Sale completed!" +
                 "\nVehicle: " + v.getVehicleBrand() + " " + v.getVehicleModel() +
