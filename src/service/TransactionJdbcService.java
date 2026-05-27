@@ -53,4 +53,11 @@ public class TransactionJdbcService {
         }
         return returnedList;
     }
+
+    public boolean deleteByCustomerEmail(String email) throws SQLException {
+        String sql = "DELETE FROM transactions WHERE customer_email = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, email);
+        return pstmt.executeUpdate() >= 0;
+    }
 }

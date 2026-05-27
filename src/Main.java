@@ -191,14 +191,12 @@ public class Main {
         System.out.println("Enter the vehicle's id that you want to remove:");
         int id = readInt(scanner);
         try {
+            VehicleJdbcService.getInstance().delete(id);
             vehicleService.removeVehicle(id);
             System.out.println("Vehicle removed successfully!");
             AuditService.getInstance().log("remove_vehicle");
-            try {
-                VehicleJdbcService.getInstance().delete(id);
-            }catch (SQLException e) {
-                System.out.println("Error when trying to delete vehicle: " + e);
-            }
+        } catch (SQLException e) {
+            System.out.println("Error when trying to delete vehicle: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -402,14 +400,12 @@ public class Main {
         System.out.println("Enter the employee's email to remove:");
         String email = readString(scanner);
         try {
+            EmployeeJdbcService.getInstance().delete(email);
             employerService.removeEmployee(email);
             System.out.println("Employee removed successfully!");
             AuditService.getInstance().log("remove_employee");
-            try {
-                EmployeeJdbcService.getInstance().delete(email);
-            } catch (SQLException e) {
-                System.out.println("Error when trying to remove employee: " + e);
-            }
+        } catch (SQLException e) {
+            System.out.println("Error when trying to remove employee: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -431,8 +427,6 @@ public class Main {
         }
         System.out.println("New name:");
         String name = readString(scanner);
-        System.out.println("New email:");
-        String newEmail = readString(scanner);
         System.out.println("New phone number:");
         String phone = readString(scanner);
         System.out.println("New department name:");
@@ -444,7 +438,7 @@ public class Main {
         System.out.println("New hire date (YYYY-MM-DD):");
         String date = readString(scanner);
         Department department = new Department(deptName, deptDesc);
-        employerService.updateEmployee(e, name, newEmail, phone, department, salary, LocalDate.parse(date));
+        employerService.updateEmployee(e, name, email, phone, department, salary, LocalDate.parse(date));
         System.out.println("Employee updated successfully!");
         AuditService.getInstance().log("update_employee");
         try {
@@ -502,14 +496,13 @@ public class Main {
         System.out.println("Enter the customer's email to remove:");
         String email = readString(scanner);
         try {
+            TransactionJdbcService.getInstance().deleteByCustomerEmail(email);
+            CustomerJdbcService.getInstance().delete(email);
             customerService.removeCustomer(email);
             System.out.println("Customer removed successfully!");
             AuditService.getInstance().log("remove_customer");
-            try{
-                CustomerJdbcService.getInstance().delete(email);
-            } catch (SQLException e) {
-                System.out.println("Error when trying to remove customer: " + e);
-            }
+        } catch (SQLException e) {
+            System.out.println("Error when trying to remove customer: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }

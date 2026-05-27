@@ -18,3 +18,7 @@ add_vehicle,27-05-2026 03:35:50,main
 add_employee,27-05-2026 03:36:51,main
 add_customer,27-05-2026 03:37:31,main
 sell_vehicle,27-05-2026 03:37:58,main
+add_vehicle,27-05-2026 03:45:26,main
+update_vehicle,27-05-2026 03:52:48,main
+update_employee,27-05-2026 03:53:38,main
+remove_customer,27-05-2026 03:54:12,main

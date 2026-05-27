@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 public class VehicleService {
     private static VehicleService instance;
+    private int nextId = 1;
     private final List<Vehicle> vehicles = new ArrayList<>();
     private final List<Vehicle> soldVehicles = new ArrayList<>();
 
@@ -28,7 +29,7 @@ public class VehicleService {
         if(v == null) {
             throw new IllegalArgumentException("The Vehicle cannot be null!");
         }
-        v.setId(vehicles.size() + 1);
+        v.setId(nextId++);
         vehicles.add(v);
     }
 
