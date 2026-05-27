@@ -21,7 +21,8 @@ public class AuditService {
 
     public void log(String actionName) {
         try (FileWriter fw = new FileWriter(FILE_PATH, true)) {
-            fw.write(actionName + "," + LocalDateTime.now().format(formatter) + "\n");
+            fw.write(actionName + "," + LocalDateTime.now().format(formatter) + "," +
+                    Thread.currentThread().getName() + "\n");
         } catch (IOException e) {
             System.out.println("Audit error: " + e.getMessage());
         }

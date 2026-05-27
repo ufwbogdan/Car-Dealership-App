@@ -1,6 +1,7 @@
 import model.*;
 import service.*;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Scanner;
 
@@ -40,15 +41,14 @@ public class Main {
         EmployerService employerService = EmployerService.getInstance();
         TransactionService transactionService = TransactionService.getInstance();
 
-        VehicleCsvService vehicleCsvService = VehicleCsvService.getInstance();
-        EmployeeCsvService employeeCsvService = EmployeeCsvService.getInstance();
-        CustomerCsvService customerCsvService = CustomerCsvService.getInstance();
-        TransactionCsvService transactionCsvService = TransactionCsvService.getInstance();
-
-        vehicleCsvService.loadVehicles().forEach(vehicleService::addVehicle);
-        employeeCsvService.loadEmployees().forEach(employerService::addEmployee);
-        customerCsvService.loadCustomers().forEach(customerService::addCustomer);
-        transactionCsvService.loadTransactions(customerService.getCustomers()).forEach(transactionService::addTransaction);
+        try {
+            VehicleJdbcService.getInstance().read().forEach(vehicleService::addVehicle);
+            EmployeeJdbcService.getInstance().read().forEach(employerService::addEmployee);
+            CustomerJdbcService.getInstance().read().forEach(customerService::addCustomer);
+            TransactionJdbcService.getInstance().read().forEach(transactionService::addTransaction);
+        } catch (SQLException e) {
+            System.out.println("Error loading data: " + e.getMessage());
+        }
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
         while(running) {
@@ -145,20 +145,23 @@ public class Main {
             case 1 -> {
                 System.out.println("Fuel Type:");
                 String fuelType = readString(scanner);
-
                 System.out.println("Engine Capacity:");
                 int cc = readInt(scanner);
-
                 System.out.println("Fuel Consumption:");
                 double fuelConsumption = readDouble(scanner);
 
-                vehicleService.addVehicle(new CombustionVehicle(mileage, price, year, cc, body, brand, model, fuelType, fuelConsumption));
+                CombustionVehicle cv = new CombustionVehicle(mileage, price, year, cc, body, brand, model, fuelType, fuelConsumption);
+                vehicleService.addVehicle(cv);
+                try { VehicleJdbcService.getInstance().create(cv); } catch (SQLException e) { System.out.println(e.getMessage()); }
             }
 
             case 2 -> {
                 System.out.println("Energy Consumption:");
                 double energyConsumption = readDouble(scanner);
-                 vehicleService.addVehicle(new ElectricVehicle(mileage, price, year, body, brand, model, energyConsumption));
+
+                ElectricVehicle ev = new ElectricVehicle(mileage, price, year, body, brand, model, energyConsumption);
+                vehicleService.addVehicle(ev);
+                try { VehicleJdbcService.getInstance().create(ev); } catch (SQLException e) { System.out.println(e.getMessage()); }
             }
 
             case 3 -> {
@@ -173,14 +176,15 @@ public class Main {
 
                 CombustionVehicle combustionPart = new CombustionVehicle(mileage, price, year, cc, body, brand, model, fuelType, fuelConsumption);
                 ElectricVehicle electricPart = new ElectricVehicle(mileage, price, year, body, brand, model, energyConsumption);
-                vehicleService.addVehicle(new HybridVehicle(combustionPart, electricPart));
+                HybridVehicle hv = new HybridVehicle(combustionPart, electricPart);
+                vehicleService.addVehicle(hv);
+                try { VehicleJdbcService.getInstance().create(hv); } catch (SQLException e) { System.out.println(e.getMessage()); }
             }
 
             default -> System.out.println("Invalid Option!");
         }
         System.out.println("Vehicle added successfully!");
         AuditService.getInstance().log("add_vehicle");
-        VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
     }
 
     private static void removeVehicleMenu(Scanner scanner, VehicleService vehicleService) {
@@ -190,7 +194,11 @@ public class Main {
             vehicleService.removeVehicle(id);
             System.out.println("Vehicle removed successfully!");
             AuditService.getInstance().log("remove_vehicle");
-            VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
+            try {
+                VehicleJdbcService.getInstance().delete(id);
+            }catch (SQLException e) {
+                System.out.println("Error when trying to delete vehicle: " + e);
+            }
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -287,7 +295,11 @@ public class Main {
         vehicleService.updateVehicle(v, mileage, price, body, brand, model);
         System.out.println("Vehicle updated successfully!");
         AuditService.getInstance().log("update_vehicle");
-        VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
+        try {
+            VehicleJdbcService.getInstance().update(v);
+        } catch (SQLException e) {
+            System.out.println("Error when trying to update vehicle: " + e);
+        }
     }
 
     private static void computeFinancingMenu(Scanner scanner, VehicleService vehicleService) {
@@ -320,10 +332,12 @@ public class Main {
         try {
             vehicleService.sellVehicle(id, c);
             AuditService.getInstance().log("sell_vehicle");
-            VehicleCsvService.getInstance().saveVehicles(vehicleService.getVehicles());
-            TransactionCsvService.getInstance().saveTransactions(
-                    TransactionService.getInstance().getTransactionList()
-            );
+            try {
+                VehicleJdbcService.getInstance().delete(id);
+                TransactionJdbcService.getInstance().create(TransactionService.getInstance().getTransactionList().getLast());
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -377,7 +391,11 @@ public class Main {
         employerService.addEmployee(employee);
         System.out.println("Employee added successfully!");
         AuditService.getInstance().log("add_employee");
-        EmployeeCsvService.getInstance().saveEmployees(employerService.getEmployees());
+        try{
+            EmployeeJdbcService.getInstance().create(employee);
+        } catch (SQLException e) {
+            System.out.println("Error when trying to add employee: " + e);
+        }
     }
 
     private static void removeEmployeeMenu(Scanner scanner, EmployerService employerService) {
@@ -387,7 +405,11 @@ public class Main {
             employerService.removeEmployee(email);
             System.out.println("Employee removed successfully!");
             AuditService.getInstance().log("remove_employee");
-            EmployeeCsvService.getInstance().saveEmployees(employerService.getEmployees());
+            try {
+                EmployeeJdbcService.getInstance().delete(email);
+            } catch (SQLException e) {
+                System.out.println("Error when trying to remove employee: " + e);
+            }
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -425,7 +447,11 @@ public class Main {
         employerService.updateEmployee(e, name, newEmail, phone, department, salary, LocalDate.parse(date));
         System.out.println("Employee updated successfully!");
         AuditService.getInstance().log("update_employee");
-        EmployeeCsvService.getInstance().saveEmployees(employerService.getEmployees());
+        try {
+            EmployeeJdbcService.getInstance().update(e);
+        } catch (SQLException error) {
+            System.out.println("Error when trying to update employee: " + error);
+        }
     }
 
     private static void customerMenu(Scanner scanner, CustomerService customerService) {
@@ -461,10 +487,15 @@ public class Main {
         String phone = readString(scanner);
         System.out.println("Credit Score:");
         int creditScore = readInt(scanner);
-        customerService.addCustomer(new Customer(name, email, phone, creditScore));
+        Customer c = new Customer(name, email, phone, creditScore);
+        customerService.addCustomer(c);
         System.out.println("Customer added successfully!");
         AuditService.getInstance().log("add_customer");
-        CustomerCsvService.getInstance().saveCustomers(customerService.getCustomers());
+        try {
+            CustomerJdbcService.getInstance().create(c);
+        } catch (SQLException e) {
+            System.out.println("Error when trying to add customer: " + e);
+        }
     }
 
     private static void removeCustomerMenu(Scanner scanner, CustomerService customerService) {
@@ -474,7 +505,11 @@ public class Main {
             customerService.removeCustomer(email);
             System.out.println("Customer removed successfully!");
             AuditService.getInstance().log("remove_customer");
-            CustomerCsvService.getInstance().saveCustomers(customerService.getCustomers());
+            try{
+                CustomerJdbcService.getInstance().delete(email);
+            } catch (SQLException e) {
+                System.out.println("Error when trying to remove customer: " + e);
+            }
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
