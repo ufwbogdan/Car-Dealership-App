@@ -44,6 +44,10 @@ public class VehicleService {
         return vehicles;
     }
 
+    public void setNextId(int nextId) {
+        this.nextId = nextId;
+    }
+
     public List<Vehicle> getSoldVehicles() {
         return soldVehicles;
     }

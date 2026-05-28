@@ -43,6 +43,14 @@ public class Main {
 
         try {
             VehicleJdbcService.getInstance().read().forEach(vehicleService::addVehicle);
+
+            vehicleService.setNextId(
+                    vehicleService.getVehicles().stream()
+                            .mapToInt(Vehicle::getId)
+                            .max()
+                            .orElse(0) + 1
+            );
+
             EmployeeJdbcService.getInstance().read().forEach(employerService::addEmployee);
             CustomerJdbcService.getInstance().read().forEach(customerService::addCustomer);
             TransactionJdbcService.getInstance().read().forEach(transactionService::addTransaction);
